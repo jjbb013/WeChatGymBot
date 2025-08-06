@@ -1,0 +1,33 @@
+<!--pages/logs/logs.wxml-->
+<view class="container">
+  <view wx:if="{{isLoading}}" class="loading-tip">
+    <text>加载中...</text>
+  </view>
+
+  <view wx:elif="{{logs.length === 0}}" class="empty-tip">
+    <text>还没有任何健身记录，快去记录一笔吧！</text>
+  </view>
+
+  <view wx:else class="log-list">
+    <view class="log-card" wx:for="{{logs}}" wx:key="_id">
+      <view class="log-card-header">
+        <text class="action-name">{{item.action}}</text>
+        <text class="log-date">{{item.formattedDate}}</text>
+      </view>
+      <view class="log-card-body">
+        <view class="detail-item">
+          <text class="label">组数</text>
+          <text class="value">{{item.sets || 1}}</text>
+        </view>
+        <view class="detail-item">
+          <text class="label">次数</text>
+          <text class="value">{{item.reps}}</text>
+        </view>
+        <view class="detail-item">
+          <text class="label">负重 (kg)</text>
+          <text class="value">{{item.weight || 0}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

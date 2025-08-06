@@ -1,0 +1,39 @@
+<!--pages/chat/chat.wxml-->
+<view class="chat-container">
+  <scroll-view class="message-list" scroll-y="true" scroll-into-view="msg-{{messages.length}}">
+    <view class="message-item {{item.role}}" id="msg-{{index}}" wx:for="{{messages}}" wx:key="index">
+      <view class="avatar {{item.role}}"></view>
+      <view class="content">
+        <text user-select>{{item.content}}</text>
+      </view>
+    </view>
+    <!-- AI思考中的提示 -->
+    <view class="message-item ai" id="msg-{{messages.length}}" wx:if="{{isThinking}}">
+      <view class="avatar ai"></view>
+      <view class="content thinking">
+        <view class="dot-flashing"></view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="input-area">
+    <!-- 语音/键盘切换按钮 -->
+    <view class="icon-wrapper" bindtap="switchInputMode">
+      <view class="icon {{isVoiceMode ? 'icon-keyboard' : 'icon-voice'}}"></view>
+    </view>
+
+    <!-- 输入框核心区域 -->
+    <view class="input-wrapper">
+      <textarea wx:if="{{!isVoiceMode}}" class="input-field" value="{{inputValue}}" bindinput="handleInput" auto-height show-confirm-bar="{{false}}" cursor-spacing="20" placeholder="输入消息..." />
+      <button wx:else class="voice-record-btn {{isRecording ? 'recording' : ''}}" hover-class="voice-record-btn-hover" bindtouchstart="handleVoiceRecordStart" bindtouchend="handleVoiceRecordEnd">{{isRecording ? '松开 结束' : '按住 说话'}}</button>
+    </view>
+
+    <!-- 更多功能按钮 -->
+    <view wx:if="{{!showSendButton}}" class="icon-wrapper" bindtap="showMoreFunctions">
+      <view class="icon icon-more"></view>
+    </view>
+    
+    <!-- 发送按钮 -->
+    <button wx:if="{{showSendButton}}" class="send-btn" bindtap="sendMessage" disabled="{{isSendButtonDisabled}}">发送</button>
+  </view>
+</view>

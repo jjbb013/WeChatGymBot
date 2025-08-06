@@ -1,0 +1,161 @@
+/* pages/chat/chat.wxss */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.message-list {
+  flex-grow: 1;
+  padding: 20rpx;
+  background-color: #f7f7f7;
+}
+
+.message-item {
+  display: flex;
+  margin-bottom: 30rpx;
+}
+
+.message-item.ai {
+  justify-content: flex-start;
+}
+
+.message-item.user {
+  justify-content: flex-end;
+}
+
+.avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background-color: #ccc;
+}
+
+.avatar.ai {
+  background-color: #11cd6e;
+}
+
+.avatar.user {
+  background-color: #007aff;
+}
+
+.content {
+  max-width: 70%;
+  padding: 20rpx;
+  border-radius: 10rpx;
+  margin: 0 20rpx;
+  word-wrap: break-word;
+}
+
+.message-item.ai .content {
+  background-color: #fff;
+}
+
+.message-item.user .content {
+  background-color: #95ec69;
+}
+
+.content.thinking {
+  color: #999;
+  font-style: italic;
+}
+
+.input-area {
+  display: flex;
+  align-items: flex-end; /* 垂直底部对齐 */
+  padding: 16rpx 20rpx;
+  border-top: 1rpx solid #ddd;
+  background-color: #f7f7f7;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.icon-wrapper {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 60rpx;
+  height: 60rpx;
+  margin: 0 10rpx;
+}
+
+.icon {
+  width: 50rpx;
+  height: 50rpx;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* 这里可以根据实际图标路径进行调整 */
+.icon-voice {
+  background-image: url('data:image/svg+xml;utf8,<svg t="1722877349899" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4334" width="200" height="200"><path d="M512 704a160 160 0 0 0 160-160V320a160 160 0 0 0-320 0v224a160 160 0 0 0 160 160z m-96-384a96 96 0 0 1 192 0v224a96 96 0 0 1-192 0V320z" p-id="4335"></path><path d="M768 544a32 32 0 0 0 64 0c0-159.072-128.928-288-288-288a32 32 0 0 0 0 64c123.552 0 224 100.448 224 224zM512 864c-176.448 0-320-143.552-320-320a32 32 0 0 0-64 0c0 193.28 148.8 352.224 339.2 379.392A32 32 0 0 0 512 960v-64a32 32 0 0 0-32-32z" p-id="4336"></path></svg>');
+}
+
+.icon-keyboard {
+  background-image: url('data:image/svg+xml;utf8,<svg t="1722877463434" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4466" width="200" height="200"><path d="M896 298.666667H128c-35.2 0-64 28.8-64 64v330.666666c0 35.2 28.8 64 64 64h768c35.2 0 64-28.8 64-64V362.666667c0-35.2-28.8-64-64-64z m-32 362.666666H160V394.666667h704v266.666666z" p-id="4467"></path><path d="M256 480h64v64h-64zM384 480h64v64h-64zM512 480h64v64h-64zM640 480h64v64h-64zM256 576h64v64h-64zM384 576h64v64h-64zM512 576h64v64h-64zM640 576h384v64H256z" p-id="4468"></path></svg>');
+}
+
+.icon-more {
+  background-image: url('data:image/svg+xml;utf8,<svg t="1722877500844" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4600" width="200" height="200"><path d="M512 704a64 64 0 1 0 0-128 64 64 0 0 0 0 128zM256 704a64 64 0 1 0 0-128 64 64 0 0 0 0 128zM768 704a64 64 0 1 0 0-128 64 64 0 0 0 0 128z" p-id="4601"></path></svg>');
+}
+
+.input-wrapper {
+  flex-grow: 1;
+  margin: 0 10rpx;
+}
+
+.input-field {
+  width: 100%;
+  min-height: 72rpx; /* 最小高度 */
+  max-height: 240rpx; /* 最大高度，防止无限增高 */
+  padding: 16rpx 24rpx;
+  border-radius: 12rpx;
+  background-color: #fff;
+  border: 1rpx solid #ddd;
+  font-size: 32rpx;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+.voice-record-btn {
+  width: 100%;
+  height: 72rpx;
+  line-height: 72rpx;
+  text-align: center;
+  border-radius: 12rpx;
+  background-color: #fff;
+  border: 1rpx solid #ddd;
+  font-size: 32rpx;
+  color: #333;
+}
+
+.voice-record-btn-hover {
+  background-color: #e0e0e0;
+  color: #000;
+}
+
+.voice-record-btn.recording {
+  background-color: #e0e0e0;
+  color: #000;
+}
+
+.send-btn {
+  flex-shrink: 0;
+  width: 120rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  padding: 0;
+  margin-left: 10rpx;
+  border-radius: 12rpx;
+  background-color: #07c160;
+  color: #fff;
+  font-size: 30rpx;
+  text-align: center;
+}
+
+.send-btn[disabled] {
+  background-color: #a0e8c2;
+  color: #fff;
+}

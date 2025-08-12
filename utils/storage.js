@@ -103,10 +103,56 @@ function getLastFitnessLog() {
   }
 }
 
+/**
+ * 根据时间段获取健身记录
+ * @param {string} period - 时间段 ('today', 'week', 'month', 'quarter')
+ * @returns {Promise<Array>} - 返回指定时间段内的健身记录
+ */
+async function getFitnessLogsByPeriod(period) {
+  const db = wx.cloud.database();
+  const _ = db.command;
+  const now = new Date();
+  let startDate;
+
+  switch (period) {
+    case 'today':
+      startDate = new Date(now.setHours(0, 0, 0, 0));
+      break;
+    case 'week':
+      startDate = new Date(now.setDate(now.getDate() - now.getDay()));
+      startDate.setHours(0, 0, 0, 0);
+      break;
+    case 'month':
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      break;
+    case 'quarter':
+      const quarter = Math.floor(now.getMonth() / 3);
+      startDate = new Date(now.getFullYear(), quarter * 3, 1);
+      break;
+    default:
+      return [];
+  }
+
+  try {
+    const res = await db.collection('fitness_logs').where({
+      createdAt: _.gte(startDate)
+    }).orderBy('createdAt', 'desc').get();
+    return res.data;
+  } catch (e) {
+    console.error(`Failed to get fitness logs for period ${period}`, e);
+    wx.showToast({
+      title: '获取汇总数据失败',
+      icon: 'none'
+    });
+    return [];
+  }
+}
+
 module.exports = {
   getFitnessLogs,
   addFitnessLog,
   getTodayActionSetCount,
   setLastFitnessLog,
-  getLastFitnessLog
+  getLastFitnessLog,
+  getFitnessLogsByPeriod
 };

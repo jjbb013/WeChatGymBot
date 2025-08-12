@@ -3,6 +3,6 @@
     "projectname": "gymbotV2",
     "setting": {
         "compileHotReLoad": true,
-        "urlCheck": true
+        "urlCheck": false
     }
 }

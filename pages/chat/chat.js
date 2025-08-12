@@ -1,6 +1,6 @@
 // pages/chat/chat.js
 const { getStructuredDataFromGemini } = require('../../utils/gemini.js');
-const { addFitnessLog, getTodayActionSetCount, getLastFitnessLog, setLastFitnessLog } = require('../../utils/storage.js');
+const { addFitnessLog, getTodayActionSetCount, getLastFitnessLog, setLastFitnessLog, getFitnessLogsByPeriod } = require('../../utils/storage.js');
 const { transcribeAudio } = require('../../utils/asr.js');
 
 const recorderManager = wx.getRecorderManager();
@@ -168,6 +168,10 @@ Page({
         } else {
           aiResponseText = "抱歉，我没能完全理解您的训练记录，可以请您说得更具体一点吗？";
         }
+      } else if (structuredData.type === 'summary' && structuredData.data && structuredData.data.period) {
+        const period = structuredData.data.period;
+        const logs = await getFitnessLogsByPeriod(period);
+        aiResponseText = this.formatSummary(period, logs);
       } else {
         // 处理闲聊或其他类型的回复
         aiResponseText = structuredData.data || "我正在学习中，暂时还不太明白。";
@@ -188,6 +192,61 @@ Page({
       this.setData({
         isThinking: false // 无论成功或失败，都结束思考
       });
+    }
+  },
+
+  formatSummary: function(period, logs) {
+    if (!logs || logs.length === 0) {
+      return `您在${this.getPeriodText(period)}没有任何训练记录。`;
+    }
+
+    const summary = {
+      totalSets: logs.length,
+      totalVolume: 0,
+      actionStats: {}
+    };
+
+    logs.forEach(log => {
+      const volume = (log.reps || 0) * (log.weight || 0);
+      summary.totalVolume += volume;
+
+      if (!summary.actionStats[log.action]) {
+        summary.actionStats[log.action] = {
+          sets: 0,
+          totalReps: 0,
+          totalVolume: 0,
+          maxWeight: 0
+        };
+      }
+      const stats = summary.actionStats[log.action];
+      stats.sets += 1;
+      stats.totalReps += log.reps || 0;
+      stats.totalVolume += volume;
+      if ((log.weight || 0) > stats.maxWeight) {
+        stats.maxWeight = log.weight;
+      }
+    });
+
+    let response = `您在${this.getPeriodText(period)}的训练总结如下：\n\n`;
+    response += `总组数: ${summary.totalSets} 组\n`;
+    response += `总容量 (次数*重量): ${summary.totalVolume.toFixed(2)} kg\n\n`;
+    response += `动作详情：\n`;
+
+    for (const action in summary.actionStats) {
+      const stats = summary.actionStats[action];
+      response += `- ${action}: ${stats.sets}组, 共${stats.totalReps}次, 最高重量${stats.maxWeight}kg\n`;
+    }
+
+    return response;
+  },
+
+  getPeriodText: function(period) {
+    switch (period) {
+      case 'today': return '今天';
+      case 'week': return '本周';
+      case 'month': return '本月';
+      case 'quarter': return '本季度';
+      default: return '';
     }
   }
 });

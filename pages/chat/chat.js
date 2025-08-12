@@ -1,6 +1,6 @@
 // pages/chat/chat.js
 const { getStructuredDataFromGemini } = require('../../utils/gemini.js');
-const { addFitnessLog, getTodayActionSetCount } = require('../../utils/storage.js');
+const { addFitnessLog, getTodayActionSetCount, getLastFitnessLog, setLastFitnessLog } = require('../../utils/storage.js');
 const { transcribeAudio } = require('../../utils/asr.js');
 
 const recorderManager = wx.getRecorderManager();
@@ -145,7 +145,8 @@ Page({
   // --- AI 核心逻辑 ---
   async getAiResponse(userText) {
     try {
-      const structuredData = await getStructuredDataFromGemini(userText);
+      const lastLog = getLastFitnessLog();
+      const structuredData = await getStructuredDataFromGemini(userText, lastLog);
       let aiResponseText = '';
 
       if (structuredData.type === 'log' && structuredData.data) {
@@ -158,6 +159,10 @@ Page({
 
           // 调用异步的 addFitnessLog
           const savedLog = await addFitnessLog(logData);
+          
+          // 记录成功后，更新上一次的记录
+          setLastFitnessLog(savedLog);
+
           const weight = savedLog.weight || 0;
           aiResponseText = `记录成功: ${savedLog.action} ${weight}kg ${savedLog.reps}次.\n💪 这是您今天完成的第 ${savedLog.sets} 组 ${savedLog.action}.`;
         } else {

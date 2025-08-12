@@ -21,9 +21,26 @@ const SYSTEM_PROMPT = `你是一个专业的健身教练AI助手。你的任务�
 /**
  * 调用Gemini API来解析用户输入
  * @param {string} userInput - 用户的输入文本
+ * @param {object|null} lastLog - 上一次的健身记录
  * @returns {Promise<object>} - 返回解析后的JSON对象
  */
-function getStructuredDataFromGemini(userInput) {
+function getStructuredDataFromGemini(userInput, lastLog = null) {
+  let dynamicSystemPrompt = SYSTEM_PROMPT;
+
+  if (lastLog) {
+    dynamicSystemPrompt += `
+    
+    这是用户上一次的训练记录:
+    - 动作: ${lastLog.action}
+    - 重量: ${lastLog.weight}kg
+    
+    现在，请根据这个上下文处理用户的最新输入。规则如下：
+    1. 如果用户只提供次数（例如“我又做了15个”或直接输入“15”），你应该使用上一次的动作和重量，只更新次数。
+    2. 如果用户提供了新的重量和次数（例如“20公斤 12个”），你应该使用上一次的动作，但更新重量和次数。
+    3. 如果用户提供了全新的完整记录（例如“弯举 5组x10次@30kg”），则忽略上一次的记录，直接解析新记录。
+    `;
+  }
+
   return new Promise((resolve, reject) => {
     wx.request({
       url: API_URL,
@@ -35,7 +52,7 @@ function getStructuredDataFromGemini(userInput) {
       data: {
         model: "gemini-2.5-flash", // 指定使用的模型
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: dynamicSystemPrompt },
           { role: "user", content: userInput }
         ],
         temperature: 0.1, // 低温以确保输出稳定性

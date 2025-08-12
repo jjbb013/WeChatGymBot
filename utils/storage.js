@@ -77,8 +77,36 @@ async function getTodayActionSetCount(action) {
   }
 }
 
+/**
+ * 设置上一次健身记录到本地存储
+ * @param {object} log - 要存储的健身记录
+ */
+function setLastFitnessLog(log) {
+  try {
+    wx.setStorageSync('lastFitnessLog', log);
+  } catch (e) {
+    console.error('Failed to set last fitness log to local storage', e);
+  }
+}
+
+/**
+ * 从本地存储获取上一次健身记录
+ * @returns {object|null} - 上一次的健身记录，如果没有则返回 null
+ */
+function getLastFitnessLog() {
+  try {
+    const log = wx.getStorageSync('lastFitnessLog');
+    return log || null;
+  } catch (e) {
+    console.error('Failed to get last fitness log from local storage', e);
+    return null;
+  }
+}
+
 module.exports = {
   getFitnessLogs,
   addFitnessLog,
-  getTodayActionSetCount
+  getTodayActionSetCount,
+  setLastFitnessLog,
+  getLastFitnessLog
 };

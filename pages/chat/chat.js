@@ -2,34 +2,51 @@
 const { getStructuredDataFromGemini } = require('../../utils/gemini.js');
 const { addFitnessLog, getTodayActionSetCount, getLastFitnessLog, setLastFitnessLog, getFitnessLogsByPeriod } = require('../../utils/storage.js');
 const { transcribeAudio } = require('../../utils/asr.js');
+const app = getApp();
 
 const recorderManager = wx.getRecorderManager();
 
 Page({
   data: {
     messages: [
-      { role: 'ai', content: '你好！我是你的智能健身助手，有什么可以帮你的吗？' }
+      { role: 'ai', content: '你好！我是你的健身小助手，请输入你的健身数据，我会为您记录。' }
     ],
     inputValue: '',
-    isThinking: false, // AI思考中
-    isVoiceMode: false, // 是否为语音输入模式
-    showSendButton: false, // 是否显示发送按钮
-    isSendButtonDisabled: true, // 发送按钮是否禁用
-    isRecording: false // 是否正在录音
+    isThinking: false,
+    isVoiceMode: false,
+    showSendButton: false,
+    isSendButtonDisabled: true,
+    isRecording: false,
+    isProcessingVoice: false,
+    userAvatar: '/images/default-avatar.png',
+    // --- 录音UI相关 ---
+    volumeLevel: 0,
+    isCancelling: false,
+    recordStatusText: '手指上滑，取消发送',
+    startY: 0,
+    recordTimer: null
   },
 
   onLoad: function() {
     this.initRecorder();
   },
 
-  // --- 输入框与发送逻辑 ---
+  onShow: function() {
+    const userProfile = wx.getStorageSync('userProfile');
+    if (userProfile && userProfile.avatarUrl) {
+      this.setData({
+        userAvatar: userProfile.avatarUrl
+      });
+    }
+  },
+
   handleInput: function(e) {
     const value = e.detail.value;
     const trimmedValue = value.trim();
     this.setData({
       inputValue: value,
-      showSendButton: trimmedValue.length > 0, // 当有输入时显示发送按钮
-      isSendButtonDisabled: trimmedValue.length === 0 // 当输入为空时禁用发送按钮
+      showSendButton: trimmedValue.length > 0,
+      isSendButtonDisabled: trimmedValue.length === 0
     });
   },
 
@@ -42,60 +59,69 @@ Page({
       messages: [...this.data.messages, userMessage],
       inputValue: '',
       isThinking: true,
-      showSendButton: false, // 发送后隐藏发送按钮
-      isSendButtonDisabled: true // 发送后禁用按钮
+      showSendButton: false,
+      isSendButtonDisabled: true
     });
 
-    // 调用AI处理
     this.getAiResponse(text);
   },
 
-  // --- 交互模式切换 ---
   switchInputMode: function() {
     this.setData({
       isVoiceMode: !this.data.isVoiceMode
     });
   },
 
-  // --- 语音输入 ---
   initRecorder: function() {
     recorderManager.onStart(() => {
       console.log('recorder start');
-      this.setData({ isRecording: true });
+      this.setData({ 
+        isRecording: true,
+        recordStatusText: '手指上滑，取消发送',
+        isCancelling: false
+      });
+      this.startVolumeAnimation();
     });
 
     recorderManager.onStop((res) => {
       console.log('recorder stop', res);
-      this.setData({ isRecording: false });
+      this.setData({ isRecording: false, volumeLevel: 0 });
+      this.stopVolumeAnimation();
+
+      if (this.data.isCancelling) {
+        console.log('录音已取消');
+        return;
+      }
+
       if (res.duration < 1000) {
         wx.showToast({ title: '录音时间太短', icon: 'none' });
         return;
       }
-      // 获取到临时文件路径
-      const { tempFilePath } = res;
-      this.handleVoiceFile(tempFilePath);
+      
+      this.handleVoiceFile(res.tempFilePath);
     });
 
     recorderManager.onError((res) => {
       console.error('recorder error', res);
       wx.showToast({ title: '录音失败', icon: 'error' });
-      this.setData({ isRecording: false });
+      this.setData({ isRecording: false, volumeLevel: 0 });
+      this.stopVolumeAnimation();
     });
   },
 
-  handleVoiceRecordStart: function() {
-    // 检查并请求录音权限
+  handleVoiceRecordStart: function(e) {
+    if (this.data.isProcessingVoice) {
+      wx.showToast({ title: '语音处理中...', icon: 'none' });
+      return;
+    }
+    this.setData({ startY: e.touches[0].clientY });
     wx.getSetting({
       success: (res) => {
         if (!res.authSetting['scope.record']) {
           wx.authorize({
             scope: 'scope.record',
-            success: () => {
-              this.startRecording();
-            },
-            fail: () => {
-              wx.showToast({ title: '您拒绝了录音权限', icon: 'none' });
-            }
+            success: () => this.startRecording(),
+            fail: () => wx.showToast({ title: '您拒绝了录音权限', icon: 'none' })
           });
         } else {
           this.startRecording();
@@ -106,11 +132,10 @@ Page({
 
   startRecording: function() {
     const options = {
-      duration: 60000, // 录音时长，单位ms，最长1分钟
-      sampleRate: 16000, // 采样率
-      numberOfChannels: 1, // 录音通道数
-      encodeBitRate: 96000, // 编码码率
-      format: 'mp3', // 音频格式
+      duration: 60000,
+      sampleRate: 16000,
+      numberOfChannels: 1,
+      format: 'aac',
     };
     recorderManager.start(options);
   },
@@ -121,7 +146,43 @@ Page({
     }
   },
 
+  handleVoiceRecordMove: function(e) {
+    const touch = e.touches[0];
+    const moveY = touch.clientY;
+    const startY = this.data.startY;
+
+    if (startY - moveY > 50) { // 50px作为阈值
+      this.setData({
+        isCancelling: true,
+        recordStatusText: '松开手指，取消发送'
+      });
+    } else {
+      this.setData({
+        isCancelling: false,
+        recordStatusText: '手指上滑，取消发送'
+      });
+    }
+  },
+
+  startVolumeAnimation: function() {
+    this.data.recordTimer = setInterval(() => {
+      const volume = Math.floor(Math.random() * 80) + 20; // 模拟音量变化
+      this.setData({ volumeLevel: volume });
+    }, 200);
+  },
+
+  stopVolumeAnimation: function() {
+    if (this.data.recordTimer) {
+      clearInterval(this.data.recordTimer);
+      this.setData({ recordTimer: null });
+    }
+  },
+
   handleVoiceFile: async function(tempFilePath) {
+    if (!tempFilePath) return;
+    this.setData({ isProcessingVoice: true });
+    wx.showLoading({ title: '识别中...' });
+
     try {
       const recognizedText = await transcribeAudio(tempFilePath);
       this.setData({
@@ -134,15 +195,25 @@ Page({
         title: error.message || '识别失败',
         icon: 'none'
       });
+    } finally {
+      wx.hideLoading();
+      this.setData({ isProcessingVoice: false });
     }
   },
 
   showMoreFunctions: function() {
-    // 点击“+”号，显示更多功能，如发送图片等
-    wx.showToast({ title: '更多功能开发中', icon: 'none' });
+    wx.showActionSheet({
+      itemList: ['个人信息'],
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          wx.navigateTo({
+            url: '/pages/profile/profile',
+          });
+        }
+      }
+    });
   },
 
-  // --- AI 核心逻辑 ---
   async getAiResponse(userText) {
     try {
       const lastLog = getLastFitnessLog();
@@ -151,16 +222,12 @@ Page({
 
       if (structuredData.type === 'log' && structuredData.data) {
         const logData = structuredData.data;
-        // 验证一下模型返回的数据是否基本完整
         if (logData.action && logData.reps) {
-          // 查询当天该动作已完成的组数
-          const setCount = await getTodayActionSetCount(logData.action);
-          logData.sets = setCount + 1; // 将真实的组数写入logData
+          const openid = await app.globalData.openidPromise;
+          const setCount = await getTodayActionSetCount(openid, logData.action);
+          logData.sets = setCount + 1;
 
-          // 调用异步的 addFitnessLog
           const savedLog = await addFitnessLog(logData);
-          
-          // 记录成功后，更新上一次的记录
           setLastFitnessLog(savedLog);
 
           const weight = savedLog.weight || 0;
@@ -169,11 +236,11 @@ Page({
           aiResponseText = "抱歉，我没能完全理解您的训练记录，可以请您说得更具体一点吗？";
         }
       } else if (structuredData.type === 'summary' && structuredData.data && structuredData.data.period) {
+        const openid = await app.globalData.openidPromise;
         const period = structuredData.data.period;
-        const logs = await getFitnessLogsByPeriod(period);
+        const logs = await getFitnessLogsByPeriod(openid, period);
         aiResponseText = this.formatSummary(period, logs);
       } else {
-        // 处理闲聊或其他类型的回复
         aiResponseText = structuredData.data || "我正在学习中，暂时还不太明白。";
       }
       
@@ -190,7 +257,7 @@ Page({
       });
     } finally {
       this.setData({
-        isThinking: false // 无论成功或失败，都结束思考
+        isThinking: false
       });
     }
   },
@@ -248,5 +315,19 @@ Page({
       case 'quarter': return '本季度';
       default: return '';
     }
+  },
+
+  copyText: function(e) {
+    const text = e.currentTarget.dataset.text;
+    wx.setClipboardData({
+      data: text,
+      success: () => {
+        wx.showToast({
+          title: '已复制',
+          icon: 'success',
+          duration: 1000
+        });
+      }
+    });
   }
 });

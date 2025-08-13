@@ -1,0 +1,22 @@
+<!--pages/profile/profile.wxml-->
+<view class="profile-container">
+  <view class="avatar-section">
+    <button class="avatar-wrapper" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
+      <image class="avatar" src="{{avatarUrl}}" mode="aspectFill"></image>
+    </button>
+    <text class="avatar-tip">点击更换头像</text>
+  </view>
+
+  <view class="form-section">
+    <view class="form-item">
+      <text class="label">昵称</text>
+      <input class="input" type="nickname" placeholder="请输入您的昵称" value="{{nickname}}" bind:input="onNicknameInput"/>
+    </view>
+    <view class="form-item">
+      <text class="label">健身目标</text>
+      <textarea class="textarea" placeholder="例如：减脂、增肌、塑形..." value="{{goal}}" bind:input="onGoalInput" maxlength="100"/>
+    </view>
+  </view>
+
+  <button class="save-btn" bind:tap="saveProfile">保存信息</button>
+</view>

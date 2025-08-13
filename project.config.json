@@ -18,6 +18,11 @@
             "ignore": [],
             "disablePlugins": [],
             "outputPath": ""
+        },
+        "cloudfunction": {
+            "voiceToText": {
+                "timeout": 20
+            }
         }
     },
     "condition": {},

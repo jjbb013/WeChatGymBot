@@ -1,6 +1,7 @@
 // logs.js
 const { getFitnessLogs } = require('../../utils/storage.js');
 const util = require('../../utils/util.js');
+const app = getApp();
 
 Page({
   data: {
@@ -13,7 +14,8 @@ Page({
   async loadLogs() {
     this.setData({ isLoading: true });
     try {
-      const fitnessLogs = await getFitnessLogs();
+      const openid = await app.globalData.openidPromise;
+      const fitnessLogs = await getFitnessLogs(openid);
       this.setData({
         logs: fitnessLogs.map(log => {
           return {

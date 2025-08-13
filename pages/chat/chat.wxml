@@ -1,19 +1,27 @@
 <!--pages/chat/chat.wxml-->
 <view class="chat-container">
   <scroll-view class="message-list" scroll-y="true" scroll-into-view="msg-{{messages.length}}">
-    <view class="message-item {{item.role}}" id="msg-{{index}}" wx:for="{{messages}}" wx:key="index">
-      <view class="avatar {{item.role}}"></view>
-      <view class="content">
-        <text user-select>{{item.content}}</text>
-      </view>
+<view class="message-item {{item.role}}" id="msg-{{index}}" wx:for="{{messages}}" wx:key="index" bindlongpress="copyText" data-text="{{item.content}}">
+  <block wx:if="{{item.role === 'user'}}">
+    <view class="content user-content">
+      <text user-select>{{item.content}}</text>
     </view>
-    <!-- AI思考中的提示 -->
-    <view class="message-item ai" id="msg-{{messages.length}}" wx:if="{{isThinking}}">
-      <view class="avatar ai"></view>
-      <view class="content thinking">
-        <view class="dot-flashing"></view>
-      </view>
+    <image class="avatar" src="{{userAvatar}}"></image>
+  </block>
+  <block wx:else>
+    <image class="avatar" src="/images/ai-avatar.png"></image>
+    <view class="content ai-content">
+      <text user-select>{{item.content}}</text>
     </view>
+  </block>
+</view>
+<!-- AI思考中的提示 -->
+<view class="message-item ai" id="msg-{{messages.length}}" wx:if="{{isThinking}}">
+  <image class="avatar" src="/images/ai-avatar.png"></image>
+  <view class="content thinking">
+    <view class="dot-flashing"></view>
+  </view>
+</view>
   </scroll-view>
 
   <view class="input-area">
@@ -24,8 +32,8 @@
 
     <!-- 输入框核心区域 -->
     <view class="input-wrapper">
-      <textarea wx:if="{{!isVoiceMode}}" class="input-field" value="{{inputValue}}" bindinput="handleInput" auto-height show-confirm-bar="{{false}}" cursor-spacing="20" placeholder="输入消息..." />
-      <button wx:else class="voice-record-btn {{isRecording ? 'recording' : ''}}" hover-class="voice-record-btn-hover" bindtouchstart="handleVoiceRecordStart" bindtouchend="handleVoiceRecordEnd">{{isRecording ? '松开 结束' : '按住 说话'}}</button>
+      <textarea wx:if="{{!isVoiceMode}}" class="input-field" value="{{inputValue}}" bindinput="handleInput" auto-height show-confirm-bar="{{false}}" cursor-spacing="20" placeholder="输入消息..." bindconfirm="sendMessage" />
+      <button wx:else class="voice-record-btn {{isRecording ? 'recording' : ''}}" hover-class="voice-record-btn-hover" bindtouchstart="handleVoiceRecordStart">{{isRecording ? '松开 结束' : '按住 说话'}}</button>
     </view>
 
     <!-- 更多功能按钮 -->
@@ -35,5 +43,17 @@
     
     <!-- 发送按钮 -->
     <button wx:if="{{showSendButton}}" class="send-btn" bindtap="sendMessage" disabled="{{isSendButtonDisabled}}">发送</button>
+  </view>
+
+  <!-- 语音录制遮罩层 -->
+  <view class="voice-record-mask" wx:if="{{isRecording}}" bindtouchmove="handleVoiceRecordMove" bindtouchend="handleVoiceRecordEnd">
+    <view class="record-ui">
+      <view class="record-icon-wrapper">
+        <view class="record-icon"></view>
+        <!-- 此处可以添加音量变化的动画 -->
+        <view class="record-volume-animation" style="height: {{volumeLevel}}%;"></view>
+      </view>
+      <view class="record-text {{isCancelling ? 'cancel' : ''}}">{{recordStatusText}}</view>
+    </view>
   </view>
 </view>

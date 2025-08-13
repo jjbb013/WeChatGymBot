@@ -28,31 +28,24 @@
   width: 80rpx;
   height: 80rpx;
   border-radius: 50%;
-  background-color: #ccc;
-}
-
-.avatar.ai {
-  background-color: #11cd6e;
-}
-
-.avatar.user {
-  background-color: #007aff;
+  flex-shrink: 0;
 }
 
 .content {
   max-width: 70%;
   padding: 20rpx;
   border-radius: 10rpx;
-  margin: 0 20rpx;
   word-wrap: break-word;
 }
 
-.message-item.ai .content {
+.ai-content {
   background-color: #fff;
+  margin-left: 20rpx;
 }
 
-.message-item.user .content {
+.user-content {
   background-color: #95ec69;
+  margin-right: 20rpx;
 }
 
 .content.thinking {
@@ -142,20 +135,87 @@
 }
 
 .send-btn {
-  flex-shrink: 0;
-  width: 120rpx;
-  height: 64rpx;
-  line-height: 64rpx;
-  padding: 0;
-  margin-left: 10rpx;
-  border-radius: 12rpx;
+  flex-shrink: 0; /* 防止按钮被压缩 */
+  width: 100rpx; /* 减小按钮宽度 */
+  height: 60rpx;
+  line-height: 60rpx;
   background-color: #07c160;
-  color: #fff;
-  font-size: 30rpx;
-  text-align: center;
+  color: white;
+  border: none;
+  border-radius: 12rpx;
+  font-size: 26rpx;
+  margin-left: 10rpx;
+  padding: 0;
+  transition: background-color 0.3s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .send-btn[disabled] {
   background-color: #a0e8c2;
   color: #fff;
+}
+
+/* --- 语音录制 UI --- */
+.voice-record-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.record-ui {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.record-icon-wrapper {
+  position: relative;
+  width: 200rpx;
+  height: 200rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.record-icon {
+  width: 120rpx;
+  height: 120rpx;
+  background-image: url('data:image/svg+xml;utf8,<svg t="1723563033833" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4334" width="200" height="200"><path d="M512 704a160 160 0 0 0 160-160V320a160 160 0 0 0-320 0v224a160 160 0 0 0 160 160z m-96-384a96 96 0 0 1 192 0v224a96 96 0 0 1-192 0V320z" fill="#ffffff" p-id="4335"></path><path d="M768 544a32 32 0 0 0 64 0c0-159.072-128.928-288-288-288a32 32 0 0 0 0 64c123.552 0 224 100.448 224 224zM512 864c-176.448 0-320-143.552-320-320a32 32 0 0 0-64 0c0 193.28 148.8 352.224 339.2 379.392A32 32 0 0 0 512 960v-64a32 32 0 0 0-32-32z" fill="#ffffff" p-id="4336"></path></svg>');
+  background-size: contain;
+  background-repeat: no-repeat;
+  z-index: 2;
+}
+
+.record-volume-animation {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  background-color: #07c160;
+  border-radius: 10rpx;
+  transition: height 0.1s;
+  z-index: 1;
+}
+
+.record-text {
+  margin-top: 40rpx;
+  font-size: 28rpx;
+  color: #fff;
+  padding: 10rpx 30rpx;
+  border-radius: 8rpx;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.record-text.cancel {
+  background-color: #e64340;
 }

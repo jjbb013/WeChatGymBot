@@ -25,9 +25,29 @@ App({
       success: res => {
         // 发送 res.code 到后台换取 openId, sessionKey, unionId
       }
-    })
+    });
+
+    // 异步获取 openid
+    this.globalData.openidPromise = new Promise((resolve, reject) => {
+      wx.cloud.callFunction({
+        name: 'login',
+        data: {},
+        success: res => {
+          console.log('[云函数] [login] user openid: ', res.result.openid);
+          this.globalData.openid = res.result.openid;
+          wx.setStorageSync('openid', res.result.openid);
+          resolve(res.result.openid);
+        },
+        fail: err => {
+          console.error('[云函数] [login] 调用失败', err);
+          reject(err);
+        }
+      });
+    });
   },
   globalData: {
-    userInfo: null
+    userInfo: null,
+    openid: null,
+    openidPromise: null,
   }
 })

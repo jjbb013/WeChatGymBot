@@ -5,12 +5,18 @@ const db = wx.cloud.database();
 const fitnessLogsCollection = db.collection('fitness_logs');
 
 /**
- * 获取所有健身记录
+ * 获取当前用户的所有健身记录
+ * @param {string} openid - 用户的 OpenID
  * @returns {Promise<Array>} - 包含健身记录的Promise
  */
-async function getFitnessLogs() {
+async function getFitnessLogs(openid) {
+  if (!openid) {
+    return [];
+  }
   try {
-    const res = await fitnessLogsCollection.orderBy('createdAt', 'desc').get();
+    const res = await fitnessLogsCollection.where({
+      _openid: openid
+    }).orderBy('createdAt', 'desc').get();
     return res.data;
   } catch (e) {
     console.error('Failed to get fitness logs from cloud database', e);
@@ -52,12 +58,17 @@ async function addFitnessLog(log) {
 
 /**
  * 获取指定用户在今天某个动作的组数
+ * @param {string} openid - 用户的 OpenID
  * @param {string} action - 动作名称
  * @returns {Promise<number>} - 返回当天该动作的组数
  */
-async function getTodayActionSetCount(action) {
+async function getTodayActionSetCount(openid, action) {
   const db = wx.cloud.database();
   const _ = db.command;
+
+  if (!openid) {
+    return 0;
+  }
 
   // 获取今天零点的时间戳
   const today = new Date();
@@ -65,7 +76,7 @@ async function getTodayActionSetCount(action) {
 
   try {
     const res = await db.collection('fitness_logs').where({
-      // _openid 会由云函数自动加上，代表当前用户
+      _openid: openid,
       action: action,
       createdAt: _.gte(today) // createdAt 大于等于今天零点
     }).count();
@@ -105,14 +116,19 @@ function getLastFitnessLog() {
 
 /**
  * 根据时间段获取健身记录
+ * @param {string} openid - 用户的 OpenID
  * @param {string} period - 时间段 ('today', 'week', 'month', 'quarter')
  * @returns {Promise<Array>} - 返回指定时间段内的健身记录
  */
-async function getFitnessLogsByPeriod(period) {
+async function getFitnessLogsByPeriod(openid, period) {
   const db = wx.cloud.database();
   const _ = db.command;
   const now = new Date();
   let startDate;
+
+  if (!openid) {
+    return [];
+  }
 
   switch (period) {
     case 'today':
@@ -135,6 +151,7 @@ async function getFitnessLogsByPeriod(period) {
 
   try {
     const res = await db.collection('fitness_logs').where({
+      _openid: openid,
       createdAt: _.gte(startDate)
     }).orderBy('createdAt', 'desc').get();
     return res.data;

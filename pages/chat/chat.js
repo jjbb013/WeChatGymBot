@@ -1,6 +1,6 @@
 // pages/chat/chat.js
 const { getStructuredDataFromGemini } = require('../../utils/gemini.js');
-const { addFitnessLog, getTodayActionSetCount, getLastFitnessLog, setLastFitnessLog, getFitnessLogsByPeriod } = require('../../utils/storage.js');
+const { addFitnessLog, getTodayActionSetCount, getLastFitnessLog, setLastFitnessLog, getFitnessLogsByPeriod, deleteLastFitnessLog } = require('../../utils/storage.js');
 const { transcribeAudio } = require('../../utils/asr.js');
 const app = getApp();
 
@@ -9,7 +9,7 @@ const recorderManager = wx.getRecorderManager();
 Page({
   data: {
     messages: [
-      { role: 'ai', content: '你好！我是你的健身小助手，请输入你的健身数据，我会为您记录。' }
+      { role: 'ai', content: '你好！我是你的健身小助手，请输入你的健身数据，我会为您记录。也可以输入“帮助”或“项目介绍”来更深入的了解我。' }
     ],
     inputValue: '',
     isThinking: false,
@@ -215,6 +215,58 @@ Page({
   },
 
   async getAiResponse(userText) {
+    // --- 任务2 & 3：处理关键词 ---
+    if (userText.trim() === '项目介绍') {
+      const introText = "本项目是健身类的聊天机器人项目，用于快速，便捷的记录健身数据，也可以对健身数据进行周期性回顾，展示健身日历，报表等功能，后续也会开发健身动作指引的功能，项目由潘小明设计开发，如果你在使用过程中发现任何可以优化的内容，请添加我的微信进行沟通，你的支持是我开发的最大动力，微信号：Will_Pan_World";
+      const aiMessage = { role: 'ai', content: introText };
+      this.setData({
+        messages: [...this.data.messages, aiMessage],
+        isThinking: false
+      });
+      return;
+    }
+
+    if (userText.trim().toLowerCase() === '帮助' || userText.trim().toLowerCase() === 'help') {
+      const helpText = `健身小助手使用手册
+
+a) 记录健身数据
+你可以输入固定的标准格式文字记录，也可以使用自然语言来描述你的健身数据。
+- 标准格式：项目名称 负重 次数，三项数据之间使用空格分割，例如：深蹲 100KG 8
+- 自然语言：例如：我做了 8 次深蹲，负重 100 公斤
+- 连续记录：相同的动作，连续做多组时，无需完整输入所有内容，只需输入发生变化的信息。例如：120KG 8 或只输入 8
+
+b) 健身数据回顾
+你可以使用自然语言描述，例如：“汇总今日数据”，“统计我今天的训练情况”，或将“今天”替换成本周、本月，让机器人为你按照固定周期统计你的健身记录。
+
+c) 撤回错误记录
+如果发生健身记录错误的情况，你可以输入“撤回”，机器人会帮你撤回上一次的健身记录数据。
+注意：仅能撤回最近的一次数据，无法连续撤回多条数据。`;
+      const aiMessage = { role: 'ai', content: helpText };
+      this.setData({
+        messages: [...this.data.messages, aiMessage],
+        isThinking: false
+      });
+      return;
+    }
+
+    if (userText.trim() === '撤回') {
+      const openid = await app.globalData.openidPromise;
+      const success = await deleteLastFitnessLog(openid);
+      let feedbackText = '';
+      if (success) {
+        feedbackText = '✅ 已成功撤回上一条记录。';
+      } else {
+        feedbackText = '❌ 撤回失败，可能没有可撤回的记录。';
+      }
+      const aiMessage = { role: 'ai', content: feedbackText };
+      this.setData({
+        messages: [...this.data.messages, aiMessage],
+        isThinking: false
+      });
+      return;
+    }
+    // --- 关键词处理结束 ---
+
     try {
       const lastLog = getLastFitnessLog();
       const structuredData = await getStructuredDataFromGemini(userText, lastLog);

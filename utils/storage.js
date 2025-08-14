@@ -165,11 +165,62 @@ async function getFitnessLogsByPeriod(openid, period) {
   }
 }
 
+/**
+ * 删除最近一条健身记录
+ * @param {string} openid - 用户的 OpenID
+ * @returns {Promise<boolean>} - 返回是否删除成功
+ */
+async function deleteLastFitnessLog(openid) {
+  if (!openid) {
+    return false;
+  }
+  try {
+    // 1. 找到最近的一条记录
+    const lastLogRes = await fitnessLogsCollection.where({
+      _openid: openid
+    }).orderBy('createdAt', 'desc').limit(1).get();
+
+    if (lastLogRes.data.length === 0) {
+      console.log('No logs to delete.');
+      return false; // 没有记录可删
+    }
+
+    const lastLogId = lastLogRes.data[0]._id;
+
+    // 2. 删除该记录
+    const deleteRes = await fitnessLogsCollection.doc(lastLogId).remove();
+
+    if (deleteRes.stats.removed === 1) {
+      // 3. 更新本地缓存的 "lastLog"
+      const newLastLogRes = await fitnessLogsCollection.where({
+        _openid: openid
+      }).orderBy('createdAt', 'desc').limit(1).get();
+
+      if (newLastLogRes.data.length > 0) {
+        setLastFitnessLog(newLastLogRes.data[0]);
+      } else {
+        // 如果没有更多记录了，清空缓存
+        wx.removeStorageSync('lastFitnessLog');
+      }
+      return true;
+    }
+    return false;
+  } catch (e) {
+    console.error('Failed to delete last fitness log', e);
+    wx.showToast({
+      title: '撤回失败',
+      icon: 'none'
+    });
+    return false;
+  }
+}
+
 module.exports = {
   getFitnessLogs,
   addFitnessLog,
   getTodayActionSetCount,
   setLastFitnessLog,
   getLastFitnessLog,
-  getFitnessLogsByPeriod
+  getFitnessLogsByPeriod,
+  deleteLastFitnessLog
 };

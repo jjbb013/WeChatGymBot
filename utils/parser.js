@@ -64,17 +64,17 @@ function parseFitnessLog(text, lastLog = null) {
         return {
             action,
             weight: parseFloat(weightMatch[1]),
-            reps: lastLog.reps,
+            reps: lastLog.reps, // 继承上次的次数
         };
     }
 
-    // 5. 尝试匹配单独的 "重量" (e.g., "80kg")
+    // 5. 尝试匹配单独的 "重量" (e.g., "90kg")
     weightMatch = lastPart.match(weightRegex);
     if (weightMatch && parts.length === 1 && weightMatch[2] && lastLog) { // 必须带单位
         return {
-            action: lastLog.action,
+            action: lastLog.action, // 继承上次的动作
             weight: parseFloat(weightMatch[1]),
-            reps: lastLog.reps,
+            reps: lastLog.reps, // 继承上次的次数
         };
     }
 

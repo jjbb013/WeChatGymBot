@@ -238,10 +238,27 @@ a) 记录健身数据
 b) 健身数据回顾
 你可以使用自然语言描述，例如：“汇总今日数据”，“统计我今天的训练情况”，或将“今天”替换成本周、本月，让机器人为你按照固定周期统计你的健身记录。
 
-c) 撤回错误记录
+c) 结束训练并总结
+当你完成当天的全部训练后，可以输入“结束训练”或“Over”，机器人会自动为你统计当天的训练数据。
+
+d) 撤回错误记录
 如果发生健身记录错误的情况，你可以输入“撤回”，机器人会帮你撤回上一次的健身记录数据。
 注意：仅能撤回最近的一次数据，无法连续撤回多条数据。`;
       const aiMessage = { role: 'ai', content: helpText };
+      this.setData({
+        messages: [...this.data.messages, aiMessage],
+        isThinking: false
+      });
+      return;
+    }
+
+    const lowerCaseText = userText.trim().toLowerCase();
+
+    if (lowerCaseText === '结束训练' || lowerCaseText === 'over') {
+      const openid = await app.globalData.openidPromise;
+      const logs = await getFitnessLogsByPeriod(openid, 'today');
+      const summaryText = this.formatSummary('today', logs);
+      const aiMessage = { role: 'ai', content: summaryText };
       this.setData({
         messages: [...this.data.messages, aiMessage],
         isThinking: false
@@ -283,7 +300,12 @@ c) 撤回错误记录
           setLastFitnessLog(savedLog);
 
           const weight = savedLog.weight || 0;
-          aiResponseText = `记录成功: ${savedLog.action} ${weight}kg ${savedLog.reps}次.\n💪 这是您今天完成的第 ${savedLog.sets} 组 ${savedLog.action}.`;
+          aiResponseText = `记录成功: ${savedLog.action} ${weight}kg ${savedLog.reps}次。\n💪 这是您今天完成的第 ${savedLog.sets} 组 ${savedLog.action}.`;
+          
+          // 当用户完成第一组时，给予提示
+          if (savedLog.sets === 1) {
+            aiResponseText += `\n\n💡 小提示：下次做 "${savedLog.action}" 时，您可以只输入变化的重量或次数哦，例如: "${weight}kg 10" 或 "12"。`;
+          }
         } else {
           aiResponseText = "抱歉，我没能完全理解您的训练记录，可以请您说得更具体一点吗？";
         }

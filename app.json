@@ -9,6 +9,11 @@
     "navigationBarTitleText": "智能健身AI助手",
     "navigationBarTextStyle": "black"
   },
+  "permission": {
+    "scope.record": {
+      "desc": "您的录音将用于语音识别"
+    }
+  },
   "style": "v2",
   "sitemapLocation": "sitemap.json"
 }

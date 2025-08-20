@@ -32,8 +32,8 @@
 
     <!-- 输入框核心区域 -->
     <view class="input-wrapper">
-      <textarea wx:if="{{!isVoiceMode}}" class="input-field" value="{{inputValue}}" bindinput="handleInput" auto-height show-confirm-bar="{{false}}" cursor-spacing="20" placeholder="输入消息..." bindconfirm="sendMessage" />
-      <button wx:else class="voice-record-btn {{isRecording ? 'recording' : ''}}" hover-class="voice-record-btn-hover" bindtouchstart="handleVoiceRecordStart">{{isRecording ? '松开 结束' : '按住 说话'}}</button>
+      <textarea wx:if="{{!isVoiceMode}}" class="input-field" value="{{inputValue}}" bindinput="handleInput" auto-height show-confirm-bar="{{false}}" cursor-spacing="20" placeholder="输入消息..." bindconfirm="handleTextSend" />
+      <button wx:else class="voice-record-btn {{isRecording ? 'recording' : ''}}" hover-class="voice-record-btn-hover" bindtouchstart="handleVoiceRecordStart" bindtouchend="handleVoiceRecordEnd" bindtouchmove="handleVoiceRecordMove">{{isRecording ? '松开 发送' : '按住 说话'}}</button>
     </view>
 
     <!-- 更多功能按钮 -->
@@ -42,11 +42,11 @@
     </view>
     
     <!-- 发送按钮 -->
-    <button wx:if="{{showSendButton}}" class="send-btn" bindtap="sendMessage" disabled="{{isSendButtonDisabled}}">发送</button>
+    <button wx:if="{{showSendButton}}" class="send-btn" bindtap="handleTextSend" disabled="{{isSendButtonDisabled}}">发送</button>
   </view>
 
   <!-- 语音录制遮罩层 -->
-  <view class="voice-record-mask" wx:if="{{isRecording}}" bindtouchmove="handleVoiceRecordMove" bindtouchend="handleVoiceRecordEnd">
+  <view class="voice-record-mask" wx:if="{{isRecording}}">
     <view class="record-ui">
       <view class="record-icon-wrapper">
         <view class="record-icon"></view>

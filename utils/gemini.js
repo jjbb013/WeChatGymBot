@@ -28,7 +28,8 @@ const SYSTEM_PROMPT = `你是一个专业的健身教练AI助手。你的任务�
  */
 function getStructuredDataFromGemini(userInput, lastLog = null) {
   return new Promise((resolve, reject) => {
-    const text = userInput.trim();
+    // 预处理输入，移除末尾的句号和点，并去除首尾空格
+    const text = userInput.trim().replace(/[.。]$/, '');
 
     // --- 混合策略 ---
     // 1. 首先尝试本地快速解析
@@ -70,7 +71,7 @@ function getStructuredDataFromGemini(userInput, lastLog = null) {
         model: "gemini-2.5-flash", // 恢复使用 gemini-2.5-flash 模型
         messages: [
           { role: "system", content: dynamicSystemPrompt },
-          { role: "user", content: userInput }
+          { role: "user", content: text } // 使用清洗后的文本
         ],
         temperature: 0.1,
         response_format: { type: "json_object" }

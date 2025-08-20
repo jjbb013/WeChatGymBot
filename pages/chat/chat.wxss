@@ -2,18 +2,21 @@
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%; /* 从 100vh 改为 100%，继承 page 的高度 */
 }
 
 .message-list {
   flex-grow: 1;
   padding: 20rpx;
   background-color: #f7f7f7;
+  overflow-y: auto; /* 允许内容区域独立滚动 */
+  -webkit-overflow-scrolling: touch; /* 在 iOS 上启用平滑滚动 */
 }
 
 .message-item {
   display: flex;
   margin-bottom: 30rpx;
+  align-items: flex-start; /* 确保头像和内容垂直对齐 */
 }
 
 .message-item.ai {

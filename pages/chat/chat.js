@@ -1,8 +1,13 @@
 // pages/chat/chat.js
 const { getStructuredDataFromGemini } = require('../../utils/gemini.js');
-const { addFitnessLog, getTodayActionSetCount, getLastFitnessLog, setLastFitnessLog, getFitnessLogsByPeriod, deleteLastFitnessLog } = require('../../utils/storage.js');
 const { transcribeAudio } = require('../../utils/asr.js');
 const app = getApp();
+
+// --- 动态数据源 ---
+const useNorthflank = app.globalData.useNorthflank;
+const { addFitnessLog, getTodayActionSetCount, getLastFitnessLog, setLastFitnessLog, getFitnessLogsByPeriod, deleteLastFitnessLog } = useNorthflank
+  ? require('../../utils/storage_northflank.js')
+  : require('../../utils/storage.js');
 
 const recorderManager = wx.getRecorderManager();
 
@@ -18,7 +23,7 @@ Page({
     isSendButtonDisabled: true,
     isRecording: false,
     isProcessingVoice: false,
-    userAvatar: '/images/default-avatar.png',
+    userAvatar: '../../images/ai-avatar.png', // 修正默认头像路径
     // --- 录音UI相关 ---
     volumeLevel: 0,
     isCancelling: false,
@@ -50,9 +55,8 @@ Page({
     });
   },
 
-  sendMessage: function() {
-    const text = this.data.inputValue;
-    if (!text.trim() || this.data.isThinking) return;
+  sendMessage: function(text) {
+    if (!text || !text.trim() || this.data.isThinking) return;
 
     const userMessage = { role: 'user', content: text };
     this.setData({
@@ -64,6 +68,11 @@ Page({
     });
 
     this.getAiResponse(text);
+  },
+
+  // 文本输入框的发送按钮事件
+  handleTextSend: function() {
+    this.sendMessage(this.data.inputValue);
   },
 
   switchInputMode: function() {
@@ -117,13 +126,35 @@ Page({
     this.setData({ startY: e.touches[0].clientY });
     wx.getSetting({
       success: (res) => {
-        if (!res.authSetting['scope.record']) {
+        if (res.authSetting['scope.record'] === false) {
+          // 用户已拒绝过授权，引导用户去设置页手动开启
+          wx.showModal({
+            title: '录音权限提示',
+            content: '您需要授权录音权限才能使用语音输入功能。是否前往设置页面开启？',
+            success: (modalRes) => {
+              if (modalRes.confirm) {
+                wx.openSetting({
+                  success: (settingRes) => {
+                    if (settingRes.authSetting['scope.record']) {
+                      wx.showToast({ title: '授权成功', icon: 'success' });
+                      this.startRecording();
+                    } else {
+                      wx.showToast({ title: '您没有开启权限', icon: 'none' });
+                    }
+                  }
+                });
+              }
+            }
+          });
+        } else if (!res.authSetting['scope.record']) {
+          // 首次请求授权
           wx.authorize({
             scope: 'scope.record',
             success: () => this.startRecording(),
             fail: () => wx.showToast({ title: '您拒绝了录音权限', icon: 'none' })
           });
         } else {
+          // 已授权
           this.startRecording();
         }
       }
@@ -141,9 +172,10 @@ Page({
   },
 
   handleVoiceRecordEnd: function() {
-    if (this.data.isRecording) {
-      recorderManager.stop();
-    }
+    // 移除 isRecording 检查，以避免因 setData 异步更新导致的竞态条件
+    // 无论如何，在手指松开时都尝试停止录音
+    console.log('handleVoiceRecordEnd triggered. Force calling recorderManager.stop()');
+    recorderManager.stop();
   },
 
   handleVoiceRecordMove: function(e) {
@@ -185,11 +217,8 @@ Page({
 
     try {
       const recognizedText = await transcribeAudio(tempFilePath);
-      this.setData({
-        inputValue: recognizedText,
-        showSendButton: true,
-        isSendButtonDisabled: false
-      });
+      // 识别成功后直接发送
+      this.sendMessage(recognizedText);
     } catch (error) {
       wx.showToast({
         title: error.message || '识别失败',
@@ -215,7 +244,7 @@ Page({
   },
 
   async getAiResponse(userText) {
-    // --- 任务2 & 3：处理关键词 ---
+    // --- 关键词处理 ---
     if (userText.trim() === '项目介绍') {
       const introText = "本项目是健身类的聊天机器人项目，用于快速，便捷的记录健身数据，也可以对健身数据进行周期性回顾，展示健身日历，报表等功能，后续也会开发健身动作指引的功能，项目由潘小明设计开发，如果你在使用过程中发现任何可以优化的内容，请添加我的微信进行沟通，你的支持是我开发的最大动力，微信号：Will_Pan_World";
       const aiMessage = { role: 'ai', content: introText };
@@ -302,7 +331,6 @@ d) 撤回错误记录
           const weight = savedLog.weight || 0;
           aiResponseText = `记录成功: ${savedLog.action} ${weight}kg ${savedLog.reps}次。\n💪 这是您今天完成的第 ${savedLog.sets} 组 ${savedLog.action}.`;
           
-          // 当用户完成第一组时，给予提示
           if (savedLog.sets === 1) {
             aiResponseText += `\n\n💡 小提示：下次做 "${savedLog.action}" 时，您可以只输入变化的重量或次数哦，例如: "${weight}kg 10" 或 "12"。`;
           }

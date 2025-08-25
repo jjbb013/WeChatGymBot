@@ -197,3 +197,4 @@ CREATE TABLE fitness_logs (
     // storage.addFitnessLog(...);
     ```
 通过以上方案，即可在不破坏现有功能的前提下，完成新后端的开发与集成，并保留未来快速切换回原方案的能力。
+

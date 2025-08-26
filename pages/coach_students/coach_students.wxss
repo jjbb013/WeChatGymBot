@@ -1,0 +1,108 @@
+/* pages/coach_students/coach_students.wxss */
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f8f8f8;
+}
+
+.header {
+  padding: 30rpx 20rpx;
+  background-color: #fff;
+  border-bottom: 1rpx solid #eee;
+  text-align: center;
+}
+
+.title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #999;
+  font-size: 30rpx;
+  padding: 40rpx;
+}
+
+.create-student-btn-large {
+  margin-top: 40rpx;
+  background-color: #1890ff;
+  color: white;
+  width: 80%;
+  height: 90rpx;
+  line-height: 90rpx;
+  font-size: 32rpx;
+  border-radius: 10rpx;
+}
+
+.student-list {
+  flex: 1;
+  padding: 20rpx;
+}
+
+.student-item {
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  padding: 25rpx;
+  margin-bottom: 20rpx;
+  border-radius: 10rpx;
+  box-shadow: 0 2rpx 5rpx rgba(0, 0, 0, 0.05);
+}
+
+.student-avatar {
+  width: 90rpx;
+  height: 90rpx;
+  border-radius: 50%;
+  margin-right: 25rpx;
+  flex-shrink: 0;
+}
+
+.student-info {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.student-name {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: bold;
+}
+
+.student-status {
+  font-size: 26rpx;
+  color: #666;
+  margin-top: 5rpx;
+}
+
+.arrow-icon {
+  width: 40rpx;
+  height: 40rpx;
+  margin-left: 20rpx;
+  flex-shrink: 0;
+}
+
+.footer-actions {
+  padding: 20rpx;
+  background-color: #fff;
+  border-top: 1rpx solid #eee;
+  text-align: center;
+}
+
+.create-student-btn-bottom {
+  background-color: #1890ff;
+  color: white;
+  width: 90%;
+  height: 80rpx;
+  line-height: 80rpx;
+  font-size: 30rpx;
+  border-radius: 10rpx;
+}

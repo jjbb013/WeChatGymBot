@@ -1,0 +1,11 @@
+<!--pages/settings/settings.wxml-->
+<view class="container">
+  <view class="setting-item" bindtap="navigateToProfile">
+    <text>个人信息</text>
+    <image class="arrow-icon" src="/images/arrow-right.png"></image>
+  </view>
+  <view class="setting-item" bindtap="toggleCoachMode">
+    <text>健身教练</text>
+    <switch checked="{{isCoachMode}}" bindchange="onCoachModeChange"></switch>
+  </view>
+</view>

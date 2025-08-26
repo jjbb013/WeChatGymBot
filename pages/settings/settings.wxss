@@ -1,0 +1,33 @@
+/* pages/settings/settings.wxss */
+.container {
+  padding: 20rpx;
+  background-color: #f8f8f8;
+  min-height: 100vh;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  border-radius: 10rpx;
+  font-size: 32rpx;
+  color: #333;
+  box-shadow: 0 2rpx 5rpx rgba(0, 0, 0, 0.05);
+}
+
+.setting-item text {
+  flex-grow: 1;
+}
+
+.arrow-icon {
+  width: 40rpx;
+  height: 40rpx;
+  margin-left: 20rpx;
+}
+
+switch {
+  transform: scale(0.8); /* 调整开关大小 */
+}

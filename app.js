@@ -32,10 +32,28 @@ App({
       wx.cloud.callFunction({
         name: 'login',
         data: {},
-        success: res => {
+        success: async res => { // 将 success 回调函数标记为 async
           console.log('[云函数] [login] user openid: ', res.result.openid);
           this.globalData.openid = res.result.openid;
           wx.setStorageSync('openid', res.result.openid);
+
+          // 查询用户角色
+          const db = wx.cloud.database();
+          const usersCollection = db.collection('users');
+          const userRes = await usersCollection.where({
+            _openid: res.result.openid
+          }).get();
+
+          if (userRes.data.length > 0 && userRes.data[0].isCoach) {
+            this.globalData.isCoachMode = true;
+            wx.setStorageSync('isCoachMode', true);
+            console.log('用户是教练模式');
+          } else {
+            this.globalData.isCoachMode = false;
+            wx.setStorageSync('isCoachMode', false);
+            console.log('用户是普通模式');
+          }
+
           resolve(res.result.openid);
         },
         fail: err => {
@@ -50,5 +68,7 @@ App({
     openid: null,
     openidPromise: null,
     useNorthflank: false, // true: 使用 Northflank, false: 使用微信云开发
+    isCoachMode: false, // 新增：是否为教练模式
+    currentStudent: null, // 新增：教练模式下当前选中的学员信息
   }
 })

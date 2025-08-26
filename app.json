@@ -1,7 +1,10 @@
 {
   "pages": [
     "pages/chat/chat",
-    "pages/profile/profile"
+    "pages/profile/profile",
+    "pages/settings/settings",
+    "pages/coach_students/coach_students",
+    "pages/scan_qr_code/scan_qr_code"
   ],
   "window": {
     "backgroundTextStyle": "light",

@@ -1,0 +1,26 @@
+<!--pages/coach_students/coach_students.wxml-->
+<view class="container">
+  <view class="header">
+    <text class="title">我的学员</text>
+  </view>
+
+  <view wx:if="{{students.length === 0}}" class="empty-state">
+    <text>您还没有学员，点击下方按钮创建学员。</text>
+    <button class="create-student-btn-large" bindtap="createStudent">创建学员</button>
+  </view>
+
+  <scroll-view wx:else scroll-y class="student-list">
+    <view wx:for="{{students}}" wx:key="openid" class="student-item" bindtap="selectStudent" data-openid="{{item.openid}}">
+      <image class="student-avatar" src="{{item.avatarUrl || '/images/default-avatar.png'}}"></image>
+      <view class="student-info">
+        <text class="student-name">{{item.nickName || '未知学员'}}</text>
+        <text class="student-status">{{item.status === 'active' ? '已授权' : '待授权'}}</text>
+      </view>
+      <image class="arrow-icon" src="/images/arrow-right.png"></image>
+    </view>
+  </scroll-view>
+
+  <view class="footer-actions" wx:if="{{students.length > 0}}">
+    <button class="create-student-btn-bottom" bindtap="createStudent">创建新学员</button>
+  </view>
+</view>

@@ -5,6 +5,29 @@
   height: 100%; /* 从 100vh 改为 100%，继承 page 的高度 */
 }
 
+.coach-mode-header {
+  display: flex;
+  justify-content: space-around;
+  padding: 20rpx;
+  background-color: #e6f7ff; /* 淡蓝色背景 */
+  border-bottom: 1rpx solid #bae7ff;
+}
+
+.create-student-btn, .view-students-btn {
+  flex: 1;
+  margin: 0 10rpx;
+  background-color: #1890ff; /* 蓝色按钮 */
+  color: white;
+  font-size: 28rpx;
+  height: 70rpx;
+  line-height: 70rpx;
+  border-radius: 10rpx;
+}
+
+.create-student-btn::after, .view-students-btn::after {
+  border: none; /* 移除默认边框 */
+}
+
 .message-list {
   flex-grow: 1;
   padding: 20rpx;

@@ -7,15 +7,17 @@ const fitnessLogsCollection = db.collection('fitness_logs');
 /**
  * 获取当前用户的所有健身记录
  * @param {string} openid - 用户的 OpenID
+ * @param {string} targetOpenid - 目标用户的 OpenID (教练模式下为学员 OpenID)
  * @returns {Promise<Array>} - 包含健身记录的Promise
  */
-async function getFitnessLogs(openid) {
-  if (!openid) {
+async function getFitnessLogs(openid, targetOpenid = null) {
+  const queryOpenid = targetOpenid || openid;
+  if (!queryOpenid) {
     return [];
   }
   try {
     const res = await fitnessLogsCollection.where({
-      _openid: openid
+      _openid: queryOpenid
     }).orderBy('createdAt', 'desc').get();
     return res.data;
   } catch (e) {
@@ -31,20 +33,24 @@ async function getFitnessLogs(openid) {
 /**
  * 添加一条新的健身记录到云数据库
  * @param {object} log - 要添加的记录
+ * @param {string} openid - 当前用户的 OpenID
+ * @param {string} targetOpenid - 目标用户的 OpenID (教练模式下为学员 OpenID)
  * @returns {Promise<object>} - 返回包含新纪录的Promise
  */
-async function addFitnessLog(log) {
+async function addFitnessLog(log, openid, targetOpenid = null) {
+  const recordOpenid = targetOpenid || openid;
+  if (!recordOpenid) {
+    throw new Error('无法确定记录所属用户OpenID');
+  }
   try {
     const newLog = {
       ...log,
-      // _id 和 _openid 会由云开发自动添加
+      _openid: recordOpenid, // 明确指定记录所属用户
       createdAt: db.serverDate() // 使用服务端时间，保证时间准确性
     };
     const res = await fitnessLogsCollection.add({
       data: newLog
     });
-    // add 方法返回的是 { _id: '...' }
-    // 为了保持函数返回值的统一性，我们将添加的数据与返回的_id合并
     return { ...newLog, _id: res._id };
   } catch (e) {
     console.error('Failed to add fitness log to cloud database', e);
@@ -52,39 +58,39 @@ async function addFitnessLog(log) {
       title: '记录失败',
       icon: 'none'
     });
-    throw e; // 抛出错误，让调用方处理
+    throw e;
   }
 }
 
 /**
  * 获取指定用户在今天某个动作的组数
- * @param {string} openid - 用户的 OpenID
+ * @param {string} openid - 当前用户的 OpenID
  * @param {string} action - 动作名称
+ * @param {string} targetOpenid - 目标用户的 OpenID (教练模式下为学员 OpenID)
  * @returns {Promise<number>} - 返回当天该动作的组数
  */
-async function getTodayActionSetCount(openid, action) {
-  const db = wx.cloud.database();
+async function getTodayActionSetCount(openid, action, targetOpenid = null) {
+  const queryOpenid = targetOpenid || openid;
   const _ = db.command;
 
-  if (!openid) {
+  if (!queryOpenid) {
     return 0;
   }
 
-  // 获取今天零点的时间戳
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   try {
     const res = await db.collection('fitness_logs').where({
-      _openid: openid,
+      _openid: queryOpenid,
       action: action,
-      createdAt: _.gte(today) // createdAt 大于等于今天零点
+      createdAt: _.gte(today)
     }).count();
     
-    return res.total; // 返回查询到的记录总数
+    return res.total;
   } catch (e) {
     console.error('Failed to get today set count', e);
-    return 0; // 出错时返回0
+    return 0;
   }
 }
 
@@ -117,16 +123,19 @@ function getLastFitnessLog() {
 /**
  * 根据时间段获取健身记录
  * @param {string} openid - 用户的 OpenID
+ * @param {string} openid - 当前用户的 OpenID
  * @param {string} period - 时间段 ('today', 'week', 'month', 'quarter')
+ * @param {string} targetOpenid - 目标用户的 OpenID (教练模式下为学员 OpenID)
  * @returns {Promise<Array>} - 返回指定时间段内的健身记录
  */
-async function getFitnessLogsByPeriod(openid, period) {
+async function getFitnessLogsByPeriod(openid, period, targetOpenid = null) {
+  const queryOpenid = targetOpenid || openid;
   const db = wx.cloud.database();
   const _ = db.command;
   const now = new Date();
   let startDate;
 
-  if (!openid) {
+  if (!queryOpenid) {
     return [];
   }
 
@@ -151,7 +160,7 @@ async function getFitnessLogsByPeriod(openid, period) {
 
   try {
     const res = await db.collection('fitness_logs').where({
-      _openid: openid,
+      _openid: queryOpenid,
       createdAt: _.gte(startDate)
     }).orderBy('createdAt', 'desc').get();
     return res.data;
@@ -167,17 +176,19 @@ async function getFitnessLogsByPeriod(openid, period) {
 
 /**
  * 删除最近一条健身记录
- * @param {string} openid - 用户的 OpenID
+ * @param {string} openid - 当前用户的 OpenID
+ * @param {string} targetOpenid - 目标用户的 OpenID (教练模式下为学员 OpenID)
  * @returns {Promise<boolean>} - 返回是否删除成功
  */
-async function deleteLastFitnessLog(openid) {
-  if (!openid) {
+async function deleteLastFitnessLog(openid, targetOpenid = null) {
+  const queryOpenid = targetOpenid || openid;
+  if (!queryOpenid) {
     return false;
   }
   try {
     // 1. 找到最近的一条记录
     const lastLogRes = await fitnessLogsCollection.where({
-      _openid: openid
+      _openid: queryOpenid
     }).orderBy('createdAt', 'desc').limit(1).get();
 
     if (lastLogRes.data.length === 0) {
@@ -191,15 +202,14 @@ async function deleteLastFitnessLog(openid) {
     const deleteRes = await fitnessLogsCollection.doc(lastLogId).remove();
 
     if (deleteRes.stats.removed === 1) {
-      // 3. 更新本地缓存的 "lastLog"
+      // 3. 更新本地缓存的 "lastLog" (这里只更新当前用户的本地缓存，不影响学员的)
       const newLastLogRes = await fitnessLogsCollection.where({
-        _openid: openid
+        _openid: openid // 注意这里仍然是当前用户的 openid
       }).orderBy('createdAt', 'desc').limit(1).get();
 
       if (newLastLogRes.data.length > 0) {
         setLastFitnessLog(newLastLogRes.data[0]);
       } else {
-        // 如果没有更多记录了，清空缓存
         wx.removeStorageSync('lastFitnessLog');
       }
       return true;

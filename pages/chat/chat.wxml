@@ -1,5 +1,9 @@
 <!--pages/chat/chat.wxml-->
 <view class="chat-container">
+  <view wx:if="{{isCoachMode}}" class="coach-mode-header">
+    <button class="create-student-btn" bindtap="createStudent">创建学员</button>
+    <button class="view-students-btn" bindtap="viewStudents">查看学员</button>
+  </view>
   <scroll-view class="message-list" scroll-y="true" scroll-into-view="msg-{{messages.length}}">
 <view class="message-item {{item.role}}" id="msg-{{index}}" wx:for="{{messages}}" wx:key="index" bindlongpress="copyText" data-text="{{item.content}}">
   <block wx:if="{{item.role === 'user'}}">
@@ -37,7 +41,7 @@
     </view>
 
     <!-- 更多功能按钮 -->
-    <view wx:if="{{!showSendButton}}" class="icon-wrapper" bindtap="showMoreFunctions">
+    <view class="icon-wrapper" bindtap="showMoreFunctions">
       <view class="icon icon-more"></view>
     </view>
     

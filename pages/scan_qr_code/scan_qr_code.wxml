@@ -1,0 +1,21 @@
+<!--pages/scan_qr_code/scan_qr_code.wxml-->
+<view class="container">
+  <view class="header">
+    <text class="title">{{mode === 'coach' ? '创建学员二维码' : '扫描教练二维码'}}</text>
+  </view>
+
+  <block wx:if="{{mode === 'coach'}}">
+    <view class="qr-code-section">
+      <canvas canvas-id="qrcodeCanvas" style="width: 400rpx; height: 400rpx;"></canvas>
+      <text class="qr-code-tip">请让学员扫描此二维码进行授权</text>
+    </view>
+    <button class="copy-link-btn" bindtap="copyQRCodeLink">复制二维码链接</button>
+  </block>
+
+  <block wx:else>
+    <view class="scan-section">
+      <text class="scan-tip">请扫描教练提供的二维码进行授权</text>
+      <button class="scan-qr-btn" bindtap="scanQRCode">扫描二维码</button>
+    </view>
+  </block>
+</view>

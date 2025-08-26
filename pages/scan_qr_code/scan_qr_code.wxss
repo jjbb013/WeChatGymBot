@@ -1,0 +1,84 @@
+/* pages/scan_qr_code/scan_qr_code.wxss */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  background-color: #f8f8f8;
+  padding: 40rpx 20rpx;
+  box-sizing: border-box;
+}
+
+.header {
+  width: 100%;
+  padding: 20rpx 0;
+  text-align: center;
+  margin-bottom: 60rpx;
+}
+
+.title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.qr-code-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 80rpx;
+  background-color: #fff;
+  padding: 40rpx;
+  border-radius: 10rpx;
+  box-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.08);
+}
+
+canvas {
+  width: 400rpx;
+  height: 400rpx;
+  background-color: #fff;
+  border: 1rpx solid #eee;
+}
+
+.qr-code-tip {
+  margin-top: 30rpx;
+  font-size: 28rpx;
+  color: #666;
+  text-align: center;
+}
+
+.copy-link-btn {
+  background-color: #1890ff;
+  color: white;
+  width: 80%;
+  height: 90rpx;
+  line-height: 90rpx;
+  font-size: 32rpx;
+  border-radius: 10rpx;
+}
+
+.scan-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  width: 100%;
+}
+
+.scan-tip {
+  font-size: 32rpx;
+  color: #333;
+  margin-bottom: 60rpx;
+  text-align: center;
+}
+
+.scan-qr-btn {
+  background-color: #07c160;
+  color: white;
+  width: 80%;
+  height: 90rpx;
+  line-height: 90rpx;
+  font-size: 32rpx;
+  border-radius: 10rpx;
+}

@@ -24,6 +24,8 @@ Page({
     isRecording: false,
     isProcessingVoice: false,
     userAvatar: '../../images/ai-avatar.png', // 修正默认头像路径
+    isCoachMode: false, // 新增教练模式状态
+    currentStudent: null, // 新增：教练模式下当前选中的学员信息
     // --- 录音UI相关 ---
     volumeLevel: 0,
     isCancelling: false,
@@ -43,6 +45,11 @@ Page({
         userAvatar: userProfile.avatarUrl
       });
     }
+    // 更新教练模式状态和当前学员
+    this.setData({
+      isCoachMode: app.globalData.isCoachMode || wx.getStorageSync('isCoachMode') || false,
+      currentStudent: app.globalData.currentStudent || wx.getStorageSync('currentStudent') || null
+    });
   },
 
   handleInput: function(e) {
@@ -230,16 +237,34 @@ Page({
     }
   },
 
+  onShow: function() {
+    const userProfile = wx.getStorageSync('userProfile');
+    if (userProfile && userProfile.avatarUrl) {
+      this.setData({
+        userAvatar: userProfile.avatarUrl
+      });
+    }
+    // 更新教练模式状态
+    this.setData({
+      isCoachMode: app.globalData.isCoachMode || wx.getStorageSync('isCoachMode') || false
+    });
+  },
+
+  createStudent: function() {
+    wx.navigateTo({
+      url: '/pages/scan_qr_code/scan_qr_code?mode=coach', // 教练模式下生成二维码
+    });
+  },
+
+  viewStudents: function() {
+    wx.navigateTo({
+      url: '/pages/coach_students/coach_students',
+    });
+  },
+
   showMoreFunctions: function() {
-    wx.showActionSheet({
-      itemList: ['个人信息'],
-      success: (res) => {
-        if (res.tapIndex === 0) {
-          wx.navigateTo({
-            url: '/pages/profile/profile',
-          });
-        }
-      }
+    wx.navigateTo({
+      url: '/pages/settings/settings',
     });
   },
 
@@ -322,16 +347,19 @@ d) 撤回错误记录
         const logData = structuredData.data;
         if (logData.action && logData.reps) {
           const openid = await app.globalData.openidPromise;
-          const setCount = await getTodayActionSetCount(openid, logData.action);
+          const targetOpenid = this.data.isCoachMode && this.data.currentStudent ? this.data.currentStudent.openid : null;
+
+          const setCount = await getTodayActionSetCount(openid, logData.action, targetOpenid);
           logData.sets = setCount + 1;
 
-          const savedLog = await addFitnessLog(logData);
-          setLastFitnessLog(savedLog);
+          const savedLog = await addFitnessLog(logData, openid, targetOpenid);
+          setLastFitnessLog(savedLog); // 本地缓存仍然是当前用户自己的最后一条记录
 
           const weight = savedLog.weight || 0;
-          aiResponseText = `记录成功: ${savedLog.action} ${weight}kg ${savedLog.reps}次。\n💪 这是您今天完成的第 ${savedLog.sets} 组 ${savedLog.action}.`;
+          let targetUserText = targetOpenid ? `为学员 ${this.data.currentStudent.nickName} ` : '您';
+          aiResponseText = `记录成功: ${targetUserText}的 ${savedLog.action} ${weight}kg ${savedLog.reps}次。\n💪 这是${targetUserText}今天完成的第 ${savedLog.sets} 组 ${savedLog.action}.`;
           
-          if (savedLog.sets === 1) {
+          if (savedLog.sets === 1 && !targetOpenid) { // 只有普通用户才显示小提示
             aiResponseText += `\n\n💡 小提示：下次做 "${savedLog.action}" 时，您可以只输入变化的重量或次数哦，例如: "${weight}kg 10" 或 "12"。`;
           }
         } else {
@@ -339,9 +367,10 @@ d) 撤回错误记录
         }
       } else if (structuredData.type === 'summary' && structuredData.data && structuredData.data.period) {
         const openid = await app.globalData.openidPromise;
+        const targetOpenid = this.data.isCoachMode && this.data.currentStudent ? this.data.currentStudent.openid : null;
         const period = structuredData.data.period;
-        const logs = await getFitnessLogsByPeriod(openid, period);
-        aiResponseText = this.formatSummary(period, logs);
+        const logs = await getFitnessLogsByPeriod(openid, period, targetOpenid);
+        aiResponseText = this.formatSummary(period, logs, targetOpenid ? this.data.currentStudent.nickName : null);
       } else {
         aiResponseText = structuredData.data || "我正在学习中，暂时还不太明白。";
       }
@@ -409,12 +438,13 @@ d) 撤回错误记录
     return response;
   },
 
-  getPeriodText: function(period) {
+  getPeriodText: function(period, userName = null) {
+    let prefix = userName ? `${userName}在` : '您在';
     switch (period) {
-      case 'today': return '今天';
-      case 'week': return '本周';
-      case 'month': return '本月';
-      case 'quarter': return '本季度';
+      case 'today': return `${prefix}今天`;
+      case 'week': return `${prefix}本周`;
+      case 'month': return `${prefix}本月`;
+      case 'quarter': return `${prefix}本季度`;
       default: return '';
     }
   },

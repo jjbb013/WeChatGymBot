@@ -13,31 +13,42 @@ function parseFitnessLog(text, lastLog = null) {
     const parts = originalText.split(/\s+/);
     let action, weight, reps;
 
-    // --- 新的、更健壮的解析逻辑 ---
-
     const lastPart = parts[parts.length - 1];
     const secondLastPart = parts.length > 1 ? parts[parts.length - 2] : null;
 
-    const repsRegex = /^(\d+)$/; // 次数就是纯数字
-    const weightRegex = /^(-?\d*\.?\d+)(kg|公斤)?$/i; // 重量是数字，可带单位
+    const repsRegex = /^(\d+)$/;
+    const weightRegex = /^(-?\d*\.?\d+)(kg|公斤)?$/i;
 
     let repsMatch = lastPart.match(repsRegex);
     let weightMatch = secondLastPart ? secondLastPart.match(weightRegex) : null;
 
-    // 1. 尝试匹配 "动作 重量 次数" 格式 (e.g., "杠铃卧推 80kg 10")
-    if (repsMatch && weightMatch) {
+    // --- 调整匹配顺序和逻辑 ---
+
+    // 1. 尝试匹配 "重量 次数" (e.g., "80kg 10") - 优先处理这种继承动作的场景
+    // 必须有 lastLog 才能继承动作
+    if (repsMatch && weightMatch && parts.length === 2 && lastLog) {
+        return {
+            action: lastLog.action,
+            weight: parseFloat(weightMatch[1]),
+            reps: parseInt(repsMatch[1]),
+        };
+    }
+
+    // 2. 尝试匹配 "动作 重量 次数" 格式 (e.g., "杠铃卧推 80kg 10")
+    // 确保有足够的 parts 来构成 "动作 重量 次数"
+    if (repsMatch && weightMatch && parts.length >= 3) {
         action = parts.slice(0, -2).join(' ');
         weight = parseFloat(weightMatch[1]);
         reps = parseInt(repsMatch[1]);
         return { action, weight, reps };
     }
 
-    // 2. 尝试匹配 "动作 次数" (e.g., "杠铃卧推 10")
+    // 3. 尝试匹配 "动作 次数" (e.g., "杠铃卧推 10")
+    // 确保 lastPart 是次数，且 action 部分不是纯数字或带kg的数字
     repsMatch = lastPart.match(repsRegex);
     if (repsMatch && parts.length > 1) {
         action = parts.slice(0, -1).join(' ');
-        // 检查action部分是否是纯数字或带kg的数字，如果是，则说明输入格式更可能是 "重量 次数"
-        if (!action.match(weightRegex)) {
+        if (!action.match(weightRegex)) { // 确保 action 不是 "重量" 格式
              return {
                 action,
                 weight: lastLog ? lastLog.weight : 0,
@@ -46,17 +57,6 @@ function parseFitnessLog(text, lastLog = null) {
         }
     }
 
-    // 3. 尝试匹配 "重量 次数" (e.g., "80kg 10")
-    repsMatch = lastPart.match(repsRegex);
-    weightMatch = secondLastPart ? secondLastPart.match(weightRegex) : null;
-    if (repsMatch && weightMatch && parts.length === 2 && lastLog) {
-         return {
-            action: lastLog.action,
-            weight: parseFloat(weightMatch[1]),
-            reps: parseInt(repsMatch[1]),
-        };
-    }
-    
     // 4. 尝试匹配 "动作 重量" (e.g., "杠铃卧推 80kg")
     weightMatch = lastPart.match(weightRegex);
     if (weightMatch && parts.length > 1 && lastLog) {
@@ -88,7 +88,7 @@ function parseFitnessLog(text, lastLog = null) {
         };
     }
 
-    return null; // 所有模式均未匹配
+    return null;
 }
 
 module.exports = {

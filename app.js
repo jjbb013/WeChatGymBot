@@ -49,6 +49,6 @@ App({
     userInfo: null,
     openid: null,
     openidPromise: null,
-    useNorthflank: true, // true: 使用 Northflank, false: 使用微信云开发
+    useNorthflank: false, // true: 使用 Northflank, false: 使用微信云开发
   }
 })
